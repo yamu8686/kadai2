@@ -13,12 +13,24 @@ class BooksController < ApplicationController
   end
 
   def create
-    book = Book.new(book_params)
-    book.save
-    redirect_to book_path(book.id)
+    @user = current_user
+    @new_book = Book.new(book_params)
+    @book = Book.new(book_params)
+    @new_book.user_id = current_user.id
+    if @new_book.save
+      @book.save
+      flash[:notice] = 'Book was successfully created.'
+      redirect_to book_path(@new_book)
+      redirect_to book_path(@book.id)
+    else
+      flash[:alert] = "投稿に失敗しました。"
+      @books = Book.all
+      render :index
+    end
   end
 
   def show
+    @books = Book.all
     @book = Book.find(params[:id])
   end
 
@@ -33,9 +45,14 @@ class BooksController < ApplicationController
   end
 
   def update
-    book = Book.find(params[:id])
-    book.update(book_params)
-    redirect_to book_path(book.id)
+    @book = Book.find(params[:id])
+    @book.update(book_params)
+    if @book.save
+      redirect_to book_path(@book.id)
+    else
+      @books = Book.all
+      render :edit
+    end
   end
 
   def destroy
@@ -49,4 +66,5 @@ class BooksController < ApplicationController
   def book_params
     params.require(:book).permit(:title, :body)
   end
+
 end
